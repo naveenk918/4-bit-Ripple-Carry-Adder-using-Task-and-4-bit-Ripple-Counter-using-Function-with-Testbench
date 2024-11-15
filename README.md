@@ -1,94 +1,104 @@
-# 4-bit-Ripple-Carry-Adder-using-Task-and-4-bit-Ripple-Counter-using-Function-with-Testbench
-Aim:
+## 4-bit-Ripple-Carry-Adder-using-Task-and-4-bit-Ripple-Counter-using-Function-with-Testbench
+# Aim:
 To design and simulate a 4-bit Ripple Carry Adder using Verilog HDL with a task to implement the full adder functionality and verify its output using a testbench.
 To design and simulate a 4-bit Ripple Counter using Verilog HDL with a function to calculate the next state and verify its functionality using a testbench.
 
-Apparatus Required:
+# Apparatus Required:
 Computer with Vivado or any Verilog simulation software.
 Verilog HDL compiler.
 
-// Verilog Code
-module ripple_carry_adder_4bit (
-    input [3:0] A,      // 4-bit input A
-    input [3:0] B,      // 4-bit input B
-    input Cin,          // Carry input
-    output [3:0] Sum,   // 4-bit Sum output
-    output Cout         // Carry output
+# Verilog Code
+```
+module RippleCarryAdder_4bit (
+    input [3:0] a,        // 4-bit input A
+    input [3:0] b,        // 4-bit input B
+    input cin,            // Carry input
+    output [3:0] sum,     // 4-bit sum output
+    output cout           // Carry output
 );
 
-    reg [3:0] sum_temp;
-    reg cout_temp;
+    reg [3:0] sum_reg;
+    reg carry_out;
+    
+    // Output assignment
+    assign sum = sum_reg;
+    assign cout = carry_out;
 
-    // Task for Full Adder
+    // Task to perform full adder operation for one bit
     task full_adder;
-        input a, b, cin;
-        output sum, cout;
+        input a_bit, b_bit, carry_in;
+        output sum_bit, carry_out_bit;
+        
         begin
-            sum = a ^ b ^ cin;
-            cout = (a & b) | (b & cin) | (cin & a);
+            sum_bit = a_bit ^ b_bit ^ carry_in;
+            carry_out_bit = (a_bit & b_bit) | (carry_in & (a_bit ^ b_bit));
         end
     endtask
 
-    // Ripple carry logic using task
+    // Intermediate signals for carry between stages
+    reg c1, c2, c3;
+
     always @(*) begin
-        full_adder(A[0], B[0], Cin, sum_temp[0], cout_temp);
-        full_adder(A[1], B[1], cout_temp, sum_temp[1], cout_temp);
-        full_adder(A[2], B[2], cout_temp, sum_temp[2], cout_temp);
-        full_adder(A[3], B[3], cout_temp, sum_temp[3], Cout);
+        // Bit 0
+        full_adder(a[0], b[0], cin, sum_reg[0], c1);
+        
+        // Bit 1
+        full_adder(a[1], b[1], c1, sum_reg[1], c2);
+        
+        // Bit 2
+        full_adder(a[2], b[2], c2, sum_reg[2], c3);
+        
+        // Bit 3
+        full_adder(a[3], b[3], c3, sum_reg[3], carry_out);
     end
 
-    assign Sum = sum_temp;
-
 endmodule
+```
 
+# Testbench for Ripple carry adder
+```
+module RippleCarryAdder_4bit_tb;
 
-// Test bench for Ripple carry adder
+    reg [3:0] a, b;
+    reg cin;
+    wire [3:0] sum;
+    wire cout;
 
-module ripple_carry_adder_4bit_tb;
-
-    reg [3:0] A, B;
-    reg Cin;
-    wire [3:0] Sum;
-    wire Cout;
-
-    // Instantiate the ripple carry adder
-    ripple_carry_adder_4bit uut (
-        .A(A),
-        .B(B),
-        .Cin(Cin),
-        .Sum(Sum),
-        .Cout(Cout)
+    RippleCarryAdder_4bit uut (
+        .a(a),
+        .b(b),
+        .cin(cin),
+        .sum(sum),
+        .cout(cout)
     );
 
     initial begin
-        // Test cases
-        A = 4'b0001; B = 4'b0010; Cin = 0;
+        // Test case 1
+        a = 4'b0001; b = 4'b0010; cin = 1'b0;
         #10;
         
-        A = 4'b0110; B = 4'b0101; Cin = 0;
+        // Test case 2
+        a = 4'b0101; b = 4'b0011; cin = 1'b1;
         #10;
         
-        A = 4'b1111; B = 4'b0001; Cin = 0;
+        // Test case 3
+        a = 4'b1111; b = 4'b1111; cin = 1'b1;
         #10;
-        
-        A = 4'b1010; B = 4'b1101; Cin = 1;
-        #10;
-        
-        A = 4'b1111; B = 4'b1111; Cin = 1;
+
+        // Test case 4
+        a = 4'b1010; b = 4'b0101; cin = 1'b0;
         #10;
 
         $stop;
     end
 
-    initial begin
-        $monitor("Time = %0t | A = %b | B = %b | Cin = %b | Sum = %b | Cout = %b", $time, A, B, Cin, Sum, Cout);
-    end
-
 endmodule
+```
+# Output : ![ripple adder](https://github.com/user-attachments/assets/d21559c7-4ed6-4f2d-80cc-763760b9fe6f)
 
 
-// Verilog Code ripple counter
-
+# Verilog Code ripple counter
+```
 module ripple_counter_4bit (
     input clk,           // Clock signal
     input reset,         // Reset signal
@@ -112,44 +122,54 @@ module ripple_counter_4bit (
     end
 
 endmodule
-
-// TestBench
-
-module ripple_counter_4bit_tb;
+```
+# TestBench for Ripple Counter
+```
+module RippleCounter_4bit_tb;
 
     reg clk;
-    reg reset;
-    wire [3:0] Q;
+    reg rst;
+    wire [3:0] count;
 
-    // Instantiate the ripple counter
-    ripple_counter_4bit uut (
+    // Instantiate the Ripple Counter
+    RippleCounter_4bit uut (
         .clk(clk),
-        .reset(reset),
-        .Q(Q)
+        .rst(rst),
+        .count(count)
     );
 
-    // Clock generation (10ns period)
-    always #5 clk = ~clk;
-
+    // Clock generation
     initial begin
-        // Initialize inputs
         clk = 0;
-        reset = 1;
-
-        // Hold reset for 20ns
-        #20 reset = 0;
-
-        // Run simulation for 200ns
-        #200 $stop;
+        forever #5 clk = ~clk; // 10 time units period (50 MHz)
     end
 
+    // Test sequence
     initial begin
-        $monitor("Time = %0t | Reset = %b | Q = %b", $time, reset, Q);
+        // Test case: Reset counter
+        rst = 1;
+        #10;
+        rst = 0;
+        
+        // Let the counter run for a few clock cycles
+        #100;
+
+        // Apply reset again
+        rst = 1;
+        #10;
+        rst = 0;
+        
+        // Run for a few more cycles to observe the count behavior
+        #100;
+
+        $stop; // Stop simulation
     end
 
 endmodule
+```
+# Output : ![ripple counter](https://github.com/user-attachments/assets/346c0910-e4cd-4a37-849a-a9faa5d49e9b)
 
-Conclusion:
+# Conclusion:
 The 4-bit Ripple Carry Adder was successfully designed and implemented using Verilog HDL with the help of a task for the full adder logic. The testbench verified that the ripple carry adder correctly computes the 4-bit sum and carry-out for various input combinations. The simulation results matched the expected outputs.
 
 The 4-bit Ripple Counter was successfully designed and implemented using Verilog HDL. A function was used to calculate the next state of the counter.
